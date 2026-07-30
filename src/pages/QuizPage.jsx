@@ -18,7 +18,32 @@ export default function QuizPage({ playMetalClick, playImpact, playDeepBass }) {
   const [startTime] = useState(Date.now());
 
   const question = questions[currentQ];
-  const progress = ((currentQ + 1) / questions.length) * 100;
+  const progress = questions.length > 0 ? ((currentQ + 1) / questions.length) * 100 : 0;
+
+  if (!questions || questions.length === 0) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#050505',
+        color: '#D9D9D9',
+        fontFamily: "'Bebas Neue', sans-serif",
+      }}>
+        <h1 style={{ fontSize: '3rem', color: '#B3001B', marginBottom: '20px' }}>NO QUESTIONS UPLOADED YET</h1>
+        <p style={{ fontFamily: "'Inter', sans-serif", color: '#6D6D6D' }}>Please add questions for this subject in the source code.</p>
+        <button 
+          onClick={() => navigate('/subjects')} 
+          className="btn-industrial"
+          style={{ marginTop: '40px', fontSize: '1.2rem', padding: '12px 30px' }}
+        >
+          BACK TO SUBJECTS
+        </button>
+      </div>
+    );
+  }
 
   const handleAnswer = useCallback((index) => {
     if (answered) return;

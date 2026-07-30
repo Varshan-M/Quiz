@@ -71,30 +71,20 @@ export default function SubjectPage({ playMetalClick, playImpact }) {
           }}
         />
 
-        {/* Gradient overlay: keep left side visible, darken right side for text */}
+        {/* Gradient overlay: only darken the right side for text readability, keep left completely clear */}
         <div
           style={{
             position: 'fixed',
             inset: 0,
             background: `
               linear-gradient(90deg, 
-                rgba(5,5,5,0.1) 0%, 
-                rgba(5,5,5,0.15) 30%, 
-                rgba(5,5,5,0.65) 55%, 
-                rgba(5,5,5,0.85) 70%,
-                rgba(5,5,5,0.92) 100%
+                transparent 0%, 
+                transparent 45%, 
+                rgba(5,5,5,0.7) 65%, 
+                rgba(5,5,5,0.9) 85%,
+                rgba(5,5,5,0.95) 100%
               )
             `,
-            zIndex: 0,
-          }}
-        />
-
-        {/* Top vignette for blending */}
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'linear-gradient(180deg, rgba(5,5,5,0.25) 0%, transparent 15%, transparent 85%, rgba(5,5,5,0.3) 100%)',
             zIndex: 0,
             pointerEvents: 'none',
           }}
@@ -283,7 +273,6 @@ export default function SubjectPage({ playMetalClick, playImpact }) {
           </motion.div>
         </div>
 
-        <div className="vignette" />
       </motion.div>
     </>
   );
