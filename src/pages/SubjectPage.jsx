@@ -206,37 +206,19 @@ export default function SubjectPage({ playMetalClick, playImpact }) {
                   {String(index + 1).padStart(2, '0')}
                 </span>
 
-                {/* Icon */}
-                <span style={{
-                  fontSize: '1.4rem',
-                  filter: hoveredId === subject.id ? 'none' : 'grayscale(0.5)',
-                  transition: 'filter 0.3s',
-                }}>
-                  {subject.icon}
-                </span>
-
-                {/* Name + tagline */}
+                {/* Name */}
                 <div style={{ flex: 1 }}>
                   <h2 style={{
-                    fontFamily: "'Bebas Neue', sans-serif",
-                    fontSize: '1.3rem',
-                    letterSpacing: '0.08em',
-                    color: hoveredId === subject.id ? '#D9D9D9' : '#888',
+                    fontFamily: "'Anton', sans-serif",
+                    fontSize: '2.5rem',
+                    letterSpacing: '0.05em',
+                    color: hoveredId === subject.id ? '#D9D9D9' : '#555',
                     transition: 'color 0.3s',
-                    lineHeight: 1.1,
+                    lineHeight: 1,
+                    textTransform: 'uppercase',
                   }}>
                     {subject.name}
                   </h2>
-                  <p style={{
-                    fontFamily: "'Inter', sans-serif",
-                    fontSize: '0.7rem',
-                    color: hoveredId === subject.id ? '#6D6D6D' : '#444',
-                    fontStyle: 'italic',
-                    marginTop: '2px',
-                    transition: 'color 0.3s',
-                  }}>
-                    {subject.tagline}
-                  </p>
                 </div>
 
                 {/* Arrow */}
