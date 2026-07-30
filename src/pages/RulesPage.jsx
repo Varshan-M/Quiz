@@ -27,57 +27,36 @@ export default function RulesPage({ playImpact }) {
         overflow: 'hidden',
       }}
     >
-      {/* Rules image — displayed prominently */}
+      {/* Rules image — full screen background */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
+        initial={{ opacity: 0, scale: 1.05 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.8, delay: 0.2 }}
         style={{
-          position: 'relative',
-          width: '90%',
-          maxWidth: '900px',
-          maxHeight: '70vh',
-          borderRadius: '4px',
-          overflow: 'hidden',
-          boxShadow: '0 20px 80px rgba(0, 0, 0, 0.6), 0 0 60px rgba(179, 0, 27, 0.08)',
-          border: '1px solid #1a1a1a',
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: 'url(/images/bg-rules.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          zIndex: 0,
         }}
-      >
-        <img
-          src="/images/bg-rules.jpg"
-          alt="Arena Rules"
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'contain',
-            display: 'block',
-            background: '#0a0a0a',
-          }}
-        />
+      />
 
-        {/* Subtle border glow */}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            border: '1px solid rgba(179, 0, 27, 0.15)',
-            borderRadius: '4px',
-            pointerEvents: 'none',
-          }}
-        />
-      </motion.div>
-
-      {/* NEXT button — below the image */}
+      {/* NEXT button — positioned at bottom right */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.8 }}
         style={{
-          marginTop: '36px',
+          position: 'absolute',
+          bottom: '40px',
+          right: '40px',
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
-          gap: '12px',
+          alignItems: 'flex-end',
+          gap: '8px',
+          zIndex: 10,
         }}
       >
         <motion.button
@@ -88,6 +67,7 @@ export default function RulesPage({ playImpact }) {
           style={{
             fontSize: '1.4rem',
             padding: '16px 60px',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
           }}
         >
           NEXT →
@@ -96,10 +76,14 @@ export default function RulesPage({ playImpact }) {
         <p
           style={{
             fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '0.5rem',
-            letterSpacing: '0.25em',
-            color: '#444',
+            fontSize: '0.6rem',
+            letterSpacing: '0.15em',
+            color: '#111',
+            fontWeight: 'bold',
             textTransform: 'uppercase',
+            background: 'rgba(255,255,255,0.7)',
+            padding: '4px 8px',
+            borderRadius: '2px',
           }}
         >
           Read the rules, then proceed

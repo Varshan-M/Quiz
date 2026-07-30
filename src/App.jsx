@@ -106,9 +106,6 @@ export default function App() {
         <SmokeCanvas opacity={0.25} density={35} />
         <DustParticles count={40} />
 
-        {/* Global overlays */}
-        <div className="film-grain" />
-        <div className="scanlines" />
 
         {/* Smooth scroll */}
         <LenisInit />
