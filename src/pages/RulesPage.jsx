@@ -36,9 +36,10 @@ export default function RulesPage({ playImpact }) {
           position: 'absolute',
           inset: 0,
           backgroundImage: 'url(/images/bg-rules.jpg)',
-          backgroundSize: 'cover',
+          backgroundSize: 'contain',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
+          backgroundColor: '#050505',
           zIndex: 0,
         }}
       />

@@ -3,7 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import { useEffect } from 'react';
 import { useSoundManager } from './hooks/useSoundManager';
 import SmokeCanvas from './systems/SmokeCanvas';
-import DustParticles from './systems/DustParticles';
+
 
 import LoadingScreen from './pages/LoadingScreen';
 import HeroPage from './pages/HeroPage';
@@ -104,7 +104,6 @@ export default function App() {
       <div style={{ position: 'relative', minHeight: '100vh', background: '#050505' }}>
         {/* Global background systems */}
         <SmokeCanvas opacity={0.25} density={35} />
-        <DustParticles count={40} />
 
 
         {/* Smooth scroll */}
