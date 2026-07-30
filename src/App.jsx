@@ -11,7 +11,8 @@ import SubjectPage from './pages/SubjectPage';
 import RulesPage from './pages/RulesPage';
 import QuizPage from './pages/QuizPage';
 import CompletionScreen from './pages/CompletionScreen';
-
+import AdminLogin from './pages/AdminLogin';
+import AdminDashboard from './pages/AdminDashboard';
 function AnimatedRoutes({ sound }) {
   const location = useLocation();
 
@@ -64,6 +65,8 @@ function AnimatedRoutes({ sound }) {
             <CompletionScreen playDeepBass={sound.playDeepBass} />
           }
         />
+        <Route path="/admin" element={<AdminLogin />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard playMetalClick={sound.playMetalClick} playImpact={sound.playImpact} />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AnimatePresence>

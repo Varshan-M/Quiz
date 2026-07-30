@@ -1,24 +1,72 @@
 import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
-import { subjects, quizQuestions } from '../data/quizData';
+import { subjects } from '../data/quizData';
+import { getQuestions } from '../data/store';
 
 export default function QuizPage({ playMetalClick, playImpact, playDeepBass }) {
   const { subjectId } = useParams();
   const navigate = useNavigate();
   const subject = subjects.find(s => s.id === subjectId);
-  const questions = quizQuestions[subjectId] || [];
-
+  
+  const [questions, setQuestions] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [currentQ, setCurrentQ] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [showHint, setShowHint] = useState(false);
-  const [score, setScore] = useState(0);
-  const [answered, setAnswered] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
   const [startTime] = useState(Date.now());
 
+  useEffect(() => {
+    getQuestions(subjectId).then(data => {
+      setQuestions(data);
+      setIsLoading(false);
+    });
+  }, [subjectId]);
+
   const question = questions[currentQ];
   const progress = questions.length > 0 ? ((currentQ + 1) / questions.length) * 100 : 0;
+
+  const handleNext = useCallback(() => {
+    if (currentQ >= questions.length - 1) {
+      playDeepBass?.();
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      navigate('/complete', {
+        state: {
+          total: questions.length,
+          subject: subject.name,
+          time: elapsed,
+        },
+      });
+      return;
+    }
+    playImpact?.();
+    setTransitioning(true);
+    setTimeout(() => {
+      setCurrentQ(prev => prev + 1);
+      setShowHint(false);
+      setTransitioning(false);
+    }, 400);
+  }, [currentQ, questions.length, navigate, subject, startTime, playImpact, playDeepBass]);
+
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (e.key === 'Enter') handleNext();
+      if (e.key === 'h' && !showHint) {
+        playMetalClick?.();
+        setShowHint(true);
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [showHint, handleNext, playMetalClick]);
+
+  if (isLoading) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#050505', color: '#6D6D6D' }}>
+        LOADING INTEL...
+      </div>
+    );
+  }
 
   if (!questions || questions.length === 0) {
     return (
@@ -33,7 +81,7 @@ export default function QuizPage({ playMetalClick, playImpact, playDeepBass }) {
         fontFamily: "'Bebas Neue', sans-serif",
       }}>
         <h1 style={{ fontSize: '3rem', color: '#B3001B', marginBottom: '20px' }}>NO QUESTIONS UPLOADED YET</h1>
-        <p style={{ fontFamily: "'Inter', sans-serif", color: '#6D6D6D' }}>Please add questions for this subject in the source code.</p>
+        <p style={{ fontFamily: "'Inter', sans-serif", color: '#6D6D6D' }}>Please add questions via the Admin Dashboard.</p>
         <button 
           onClick={() => navigate('/subjects')} 
           className="btn-industrial"
@@ -45,93 +93,7 @@ export default function QuizPage({ playMetalClick, playImpact, playDeepBass }) {
     );
   }
 
-  const handleAnswer = useCallback((index) => {
-    if (answered) return;
-    playMetalClick?.();
-    setSelectedAnswer(index);
-    setAnswered(true);
-    if (index === question.correct) {
-      setScore(prev => prev + 1);
-    }
-  }, [answered, question, playMetalClick]);
-
-  const handleNext = useCallback(() => {
-    if (currentQ >= questions.length - 1) {
-      playDeepBass?.();
-      const elapsed = Math.floor((Date.now() - startTime) / 1000);
-      navigate('/complete', {
-        state: {
-          score,
-          total: questions.length,
-          subject: subject.name,
-          subjectIcon: subject.icon,
-          time: elapsed,
-        },
-      });
-      return;
-    }
-    playImpact?.();
-    setTransitioning(true);
-    setTimeout(() => {
-      setCurrentQ(prev => prev + 1);
-      setSelectedAnswer(null);
-      setShowHint(false);
-      setAnswered(false);
-      setTransitioning(false);
-    }, 400);
-  }, [currentQ, questions.length, navigate, score, subject, startTime, playImpact, playDeepBass]);
-
-  useEffect(() => {
-    const handleKey = (e) => {
-      if (e.key === 'Enter' && answered) handleNext();
-      if (e.key >= '1' && e.key <= '4' && !answered) {
-        handleAnswer(parseInt(e.key) - 1);
-      }
-      if (e.key === 'h' && !showHint) setShowHint(true);
-    };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [answered, showHint, handleAnswer, handleNext]);
-
-  if (!subject || !question) {
-    return (
-      <div style={{
-        height: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: '#6D6D6D',
-      }}>
-        Subject not found.
-      </div>
-    );
-  }
-
-  const getOptionStyle = (index) => {
-    if (!answered) {
-      return {
-        border: '1px solid #222',
-        background: 'rgba(17, 17, 17, 0.8)',
-      };
-    }
-    if (index === question.correct) {
-      return {
-        border: '1px solid #2d8a4e',
-        background: 'rgba(45, 138, 78, 0.1)',
-      };
-    }
-    if (index === selectedAnswer && index !== question.correct) {
-      return {
-        border: '1px solid #B3001B',
-        background: 'rgba(179, 0, 27, 0.1)',
-      };
-    }
-    return {
-      border: '1px solid #1a1a1a',
-      background: 'rgba(17, 17, 17, 0.4)',
-      opacity: 0.5,
-    };
-  };
+  if (!subject || !question) return null;
 
   return (
     <motion.div
@@ -140,7 +102,8 @@ export default function QuizPage({ playMetalClick, playImpact, playDeepBass }) {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.6 }}
       style={{
-        minHeight: '100vh',
+        height: '100vh',
+        overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
         background: '#050505',
@@ -150,384 +113,158 @@ export default function QuizPage({ playMetalClick, playImpact, playDeepBass }) {
       {/* Top bar */}
       <div style={{
         display: 'flex',
-        alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '20px 30px',
-        borderBottom: '1px solid #111',
-        position: 'relative',
-        zIndex: 20,
+        alignItems: 'center',
+        padding: '24px 40px',
+        borderBottom: '1px solid rgba(255,255,255,0.05)',
+        zIndex: 10,
       }}>
-        {/* Left: Back + Subject */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => navigate('/subjects')}
-            data-hoverable
-            style={{
-              background: 'none',
-              border: '1px solid #222',
-              color: '#6D6D6D',
-              padding: '8px 16px',
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: '0.65rem',
-              letterSpacing: '0.15em',
-              cursor: 'pointer',
-              textTransform: 'uppercase',
-              transition: 'all 0.3s',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = '#B3001B';
-              e.currentTarget.style.color = '#D9D9D9';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = '#222';
-              e.currentTarget.style.color = '#6D6D6D';
-            }}
-          >
-            ← Exit Arena
-          </motion.button>
-          <div>
-            <span style={{
-              fontFamily: "'Bebas Neue', sans-serif",
-              fontSize: '1.1rem',
-              color: '#D9D9D9',
-              letterSpacing: '0.1em',
-            }}>
-              {subject.icon} {subject.name}
-            </span>
+          <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.6rem', color: '#D9D9D9', letterSpacing: '0.1em' }}>
+            {subject.name}
           </div>
-        </div>
-
-        {/* Right: Score + Progress */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-          <span style={{
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '0.7rem',
-            color: '#B3001B',
-            letterSpacing: '0.1em',
-          }}>
-            SCORE: {score}
-          </span>
-          <span style={{
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '0.7rem',
-            color: '#6D6D6D',
-            letterSpacing: '0.1em',
-          }}>
-            {String(currentQ + 1).padStart(2, '0')} / {String(questions.length).padStart(2, '0')}
-          </span>
+          <div style={{ width: '1px', height: '20px', background: '#333' }} />
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '0.8rem', color: '#B3001B', letterSpacing: '0.2em' }}>
+            IMAGE {String(currentQ + 1).padStart(2, '0')} / {String(questions.length).padStart(2, '0')}
+          </div>
         </div>
       </div>
 
       {/* Progress bar */}
-      <div className="progress-bar-track">
-        <div
-          className="progress-bar-fill"
-          style={{ width: `${progress}%` }}
+      <div style={{ height: '2px', background: '#111', width: '100%' }}>
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${progress}%` }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          style={{ height: '100%', background: '#B3001B' }}
         />
       </div>
 
-      {/* Main quiz content */}
+      {/* Main Content Area */}
       <div style={{
         flex: 1,
+        minHeight: 0,
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
-        padding: '40px 20px',
+        padding: '20px 40px',
         position: 'relative',
-        zIndex: 10,
       }}>
         <AnimatePresence mode="wait">
           {!transitioning && (
             <motion.div
               key={currentQ}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -30 }}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.02 }}
               transition={{ duration: 0.4 }}
               style={{
-                maxWidth: '800px',
                 width: '100%',
+                height: '100%',
+                maxWidth: '1200px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '20px',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              {/* Question number accent */}
-              <motion.div
-                initial={{ scaleX: 0 }}
-                animate={{ scaleX: 1 }}
-                transition={{ duration: 0.6 }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  marginBottom: '24px',
-                  transformOrigin: 'left',
-                }}
-              >
-                <span style={{
-                  fontFamily: "'Bebas Neue', sans-serif",
-                  fontSize: '3rem',
-                  color: '#B3001B',
-                  lineHeight: 1,
-                  opacity: 0.3,
-                }}>
-                  {String(currentQ + 1).padStart(2, '0')}
-                </span>
+              {/* Image Display */}
+              {question.image ? (
                 <div style={{
+                  width: '100%',
                   flex: 1,
-                  height: '1px',
-                  background: 'linear-gradient(90deg, #B3001B, transparent)',
-                  opacity: 0.3,
-                }} />
-              </motion.div>
-
-              {/* Question */}
-              <h2 style={{
-                fontFamily: "'Inter', sans-serif",
-                fontSize: 'clamp(1.2rem, 2.5vw, 1.8rem)',
-                color: '#D9D9D9',
-                fontWeight: 500,
-                lineHeight: 1.4,
-                marginBottom: '40px',
-              }}>
-                {question.question}
-              </h2>
-
-              {/* Options */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                gap: '12px',
-                marginBottom: '32px',
-              }}>
-                {question.options.map((option, index) => (
-                  <motion.button
-                    key={index}
-                    whileHover={!answered ? { scale: 1.01, x: 4 } : {}}
-                    whileTap={!answered ? { scale: 0.98 } : {}}
-                    onClick={() => handleAnswer(index)}
-                    data-hoverable
-                    disabled={answered}
+                  minHeight: 0,
+                  border: '1px solid #222',
+                  borderRadius: '4px',
+                  overflow: 'hidden',
+                  background: '#0a0a0a',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  boxShadow: '0 20px 60px rgba(0,0,0,0.8)'
+                }}>
+                  <img 
+                    src={question.image} 
+                    alt="Quiz Content" 
                     style={{
-                      ...getOptionStyle(index),
-                      padding: '18px 24px',
-                      textAlign: 'left',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '16px',
-                      cursor: answered ? 'default' : 'pointer',
-                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                      borderRadius: '2px',
-                      position: 'relative',
-                      overflow: 'hidden',
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain'
                     }}
-                  >
-                    {/* Option letter */}
-                    <span style={{
-                      fontFamily: "'JetBrains Mono', monospace",
-                      fontSize: '0.7rem',
-                      color: answered && index === question.correct ? '#2d8a4e' :
-                             answered && index === selectedAnswer ? '#B3001B' : '#444',
-                      letterSpacing: '0.1em',
-                      minWidth: '20px',
-                    }}>
-                      {String.fromCharCode(65 + index)}
-                    </span>
+                  />
+                </div>
+              ) : (
+                <div style={{ width: '100%', height: '40vh', border: '1px dashed #333', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>
+                  NO IMAGE UPLOADED
+                </div>
+              )}
 
-                    {/* Option text */}
-                    <span style={{
-                      fontFamily: "'Inter', sans-serif",
-                      fontSize: '0.9rem',
-                      color: answered && index === question.correct ? '#2d8a4e' :
-                             answered && index === selectedAnswer && index !== question.correct ? '#B3001B' :
-                             !answered ? '#D9D9D9' : '#6D6D6D',
-                      transition: 'color 0.3s',
-                    }}>
-                      {option}
-                    </span>
-
-                    {/* Correct/Wrong indicator */}
-                    {answered && index === question.correct && (
-                      <motion.span
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        style={{
-                          marginLeft: 'auto',
-                          color: '#2d8a4e',
-                          fontSize: '1rem',
-                        }}
-                      >
-                        ✓
-                      </motion.span>
-                    )}
-                    {answered && index === selectedAnswer && index !== question.correct && (
-                      <motion.span
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        style={{
-                          marginLeft: 'auto',
-                          color: '#B3001B',
-                          fontSize: '1rem',
-                        }}
-                      >
-                        ✗
-                      </motion.span>
-                    )}
-                  </motion.button>
-                ))}
-              </div>
-
-              {/* Actions row */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '16px',
-                flexWrap: 'wrap',
-              }}>
-                {/* Hint button */}
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => {
-                    setShowHint(true);
-                    playMetalClick?.();
-                  }}
-                  data-hoverable
-                  disabled={showHint}
+              {/* Hint Display */}
+              {showHint ? (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
                   style={{
-                    background: 'none',
-                    border: '1px solid #222',
-                    color: showHint ? '#444' : '#6D6D6D',
-                    padding: '10px 24px',
-                    fontFamily: "'JetBrains Mono', monospace",
-                    fontSize: '0.7rem',
-                    letterSpacing: '0.15em',
-                    cursor: showHint ? 'default' : 'pointer',
-                    textTransform: 'uppercase',
-                    transition: 'all 0.3s',
-                    opacity: showHint ? 0.5 : 1,
+                    width: '100%',
+                    padding: '24px',
+                    background: 'rgba(179, 0, 27, 0.05)',
+                    border: '1px solid rgba(179, 0, 27, 0.2)',
+                    borderRadius: '4px',
+                    textAlign: 'center',
                   }}
                 >
-                  {showHint ? '💡 Hint Revealed' : '💡 Reveal Hint'}
-                </motion.button>
-
-                {/* Next button */}
-                {answered && (
-                  <motion.button
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={handleNext}
-                    className="btn-industrial"
-                    style={{
-                      fontSize: '1rem',
-                      padding: '12px 36px',
-                    }}
-                  >
-                    {currentQ >= questions.length - 1 ? 'FINISH' : 'NEXT →'}
-                  </motion.button>
-                )}
-              </div>
-
-              {/* Hint area */}
-              <AnimatePresence>
-                {showHint && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                    animate={{ opacity: 1, height: 'auto', marginTop: 24 }}
-                    exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                    transition={{ duration: 0.4 }}
-                    style={{ overflow: 'hidden' }}
-                  >
-                    <div style={{
-                      padding: '16px 20px',
-                      borderLeft: '2px solid #B3001B',
-                      background: 'rgba(179, 0, 27, 0.03)',
-                    }}>
-                      <p style={{
-                        fontFamily: "'JetBrains Mono', monospace",
-                        fontSize: '0.6rem',
-                        letterSpacing: '0.15em',
-                        color: '#B3001B',
-                        textTransform: 'uppercase',
-                        marginBottom: '6px',
-                      }}>
-                        Hint
-                      </p>
-                      <p style={{
-                        fontFamily: "'Inter', sans-serif",
-                        fontSize: '0.85rem',
-                        color: '#6D6D6D',
-                        fontStyle: 'italic',
-                        lineHeight: 1.5,
-                      }}>
-                        {question.hint}
-                      </p>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Keyboard shortcuts */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 0.3 }}
-                transition={{ delay: 1 }}
-                style={{
-                  marginTop: '40px',
-                  display: 'flex',
-                  gap: '20px',
-                  justifyContent: 'center',
-                  flexWrap: 'wrap',
-                }}
-              >
-                {[
-                  { key: '1-4', label: 'Select' },
-                  { key: 'H', label: 'Hint' },
-                  { key: 'Enter', label: 'Next' },
-                ].map(({ key, label }) => (
-                  <span
-                    key={key}
-                    style={{
-                      fontFamily: "'JetBrains Mono', monospace",
-                      fontSize: '0.5rem',
-                      color: '#444',
-                      letterSpacing: '0.1em',
-                    }}
-                  >
-                    <span style={{
-                      padding: '2px 6px',
-                      border: '1px solid #222',
-                      borderRadius: '2px',
-                      marginRight: '4px',
-                    }}>
-                      {key}
-                    </span>
-                    {label}
-                  </span>
-                ))}
-              </motion.div>
+                  <h4 style={{ fontFamily: "'JetBrains Mono', monospace", color: '#B3001B', fontSize: '0.8rem', marginBottom: '10px', letterSpacing: '0.2em' }}>HINT REVEALED</h4>
+                  <p style={{ fontFamily: "'Inter', sans-serif", fontSize: '1.5rem', fontWeight: 'bold', color: '#FFF', lineHeight: 1.6 }}>
+                    {question.hint || 'No hint provided.'}
+                  </p>
+                </motion.div>
+              ) : (
+                <button
+                  onClick={() => { playMetalClick?.(); setShowHint(true); }}
+                  style={{
+                    background: 'transparent',
+                    border: '1px solid #333',
+                    padding: '12px 30px',
+                    color: '#888',
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: '0.9rem',
+                    letterSpacing: '0.1em',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#666'; e.currentTarget.style.color = '#fff'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#333'; e.currentTarget.style.color = '#888'; }}
+                >
+                  [ SHOW HINT (H) ]
+                </button>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* Ambient background elements */}
+      {/* Bottom control bar */}
       <div style={{
-        position: 'fixed',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: '600px',
-        height: '600px',
-        background: 'radial-gradient(circle, rgba(179, 0, 27, 0.02) 0%, transparent 70%)',
-        pointerEvents: 'none',
-        zIndex: 0,
-      }} />
+        padding: '24px 40px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        background: 'linear-gradient(0deg, #050505 0%, transparent 100%)',
+        borderTop: '1px solid rgba(255,255,255,0.02)',
+      }}>
+        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '0.7rem', color: '#444', letterSpacing: '0.1em' }}>
+          PRESS [ENTER] TO ADVANCE
+        </div>
 
-      <div className="vignette" />
+        <button
+          onClick={handleNext}
+          className="btn-industrial"
+          style={{ padding: '12px 40px', fontSize: '1.2rem' }}
+        >
+          {currentQ === questions.length - 1 ? 'FINISH' : 'NEXT →'}
+        </button>
+      </div>
     </motion.div>
   );
 }

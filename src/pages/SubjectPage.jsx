@@ -239,18 +239,30 @@ export default function SubjectPage({ playMetalClick, playImpact }) {
           {/* Footer */}
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 0.3 }}
+            animate={{ opacity: 1 }}
             transition={{ delay: 1.5 }}
-            style={{ marginTop: '30px' }}
+            style={{ marginTop: '40px', display: 'flex', flexDirection: 'column', gap: '15px' }}
           >
+            <button
+              onClick={() => { playMetalClick?.(); navigate('/admin'); }}
+              className="btn-industrial"
+              style={{
+                width: '100%',
+                padding: '16px',
+                fontSize: '1.2rem',
+              }}
+            >
+              ADMIN COMMAND CENTER
+            </button>
             <p style={{
               fontFamily: "'JetBrains Mono', monospace",
-              fontSize: '0.5rem',
+              fontSize: '0.6rem',
               letterSpacing: '0.25em',
-              color: '#333',
+              color: '#444',
               textTransform: 'uppercase',
+              textAlign: 'center'
             }}>
-              20 questions each • Choose wisely
+              Prepare for battle
             </p>
           </motion.div>
         </div>
