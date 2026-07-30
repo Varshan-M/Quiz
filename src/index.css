@@ -133,17 +133,17 @@ body {
   opacity: 0;
 }
 
-.glitch-text:hover::before {
+.glitch-text::before {
   opacity: 0.8;
   color: #B3001B;
-  animation: glitch-1 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both infinite;
+  animation: glitch-1 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both infinite;
   clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
 }
 
-.glitch-text:hover::after {
+.glitch-text::after {
   opacity: 0.8;
   color: #0ff;
-  animation: glitch-2 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) reverse both infinite;
+  animation: glitch-2 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) reverse both infinite;
   clip-path: polygon(0 60%, 100% 60%, 100% 100%, 0 100%);
 }
 
