@@ -1,13 +1,9 @@
-import localforage from 'localforage';
-
-localforage.config({
-  name: 'UndergroundQuiz',
-  storeName: 'quiz_data'
-});
+const API_URL = 'http://localhost:3001/api/questions';
 
 export const getQuestions = async (subjectId) => {
   try {
-    const data = await localforage.getItem(`questions_${subjectId}`);
+    const res = await fetch(`${API_URL}/${subjectId}`);
+    const data = await res.json();
     return data || [];
   } catch (err) {
     console.error('Error fetching questions:', err);
@@ -15,11 +11,17 @@ export const getQuestions = async (subjectId) => {
   }
 };
 
-export const saveQuestions = async (subjectId, questions) => {
+export const saveQuestions = async (subjectId, formData) => {
   try {
-    await localforage.setItem(`questions_${subjectId}`, questions);
+    const res = await fetch(`${API_URL}/${subjectId}`, {
+      method: 'POST',
+      body: formData
+    });
+    const result = await res.json();
+    return result.success;
   } catch (err) {
     console.error('Error saving questions:', err);
+    return false;
   }
 };
 

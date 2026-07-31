@@ -64,6 +64,7 @@ export default function AdminDashboard({ playMetalClick, playImpact }) {
       setQuestionsForm(prev => {
         const newForm = [...prev];
         newForm[index].image = reader.result;
+        newForm[index].imageFile = file;
         return newForm;
       });
     };
@@ -114,9 +115,27 @@ export default function AdminDashboard({ playMetalClick, playImpact }) {
     }
     setError('');
     playImpact?.();
-    await saveQuestions(selectedSubject, questionsForm);
-    setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 3000);
+    
+    const formData = new FormData();
+    const cleanedQuestions = questionsForm.map((q, idx) => {
+      const qCopy = { id: q.id, hint: q.hint, image: q.image };
+      if (q.imageFile) {
+        formData.append(`image_${idx}`, q.imageFile);
+      }
+      return qCopy;
+    });
+    
+    formData.append('data', JSON.stringify(cleanedQuestions));
+
+    const success = await saveQuestions(selectedSubject, formData);
+    if (success) {
+      const updated = await getQuestions(selectedSubject);
+      if (updated && updated.length > 0) setQuestionsForm(updated);
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 3000);
+    } else {
+      setError('ERROR: FAILED TO SAVE TO DATABASE.');
+    }
   };
 
   const handleLogout = () => {
