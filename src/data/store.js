@@ -12,7 +12,8 @@ const withTimeout = (promise, ms, errorMsg) => {
 export const getQuestions = async (subjectId) => {
   try {
     const docRef = doc(db, 'subjects', subjectId);
-    const docSnap = await withTimeout(getDoc(docRef), 10000, "FIRESTORE IS NOT RESPONDING. DID YOU CLICK 'CREATE DATABASE' IN FIREBASE?");
+    console.log("Fetching questions from Firestore...");
+    const docSnap = await withTimeout(getDoc(docRef), 15000, "FIRESTORE FETCH TIMED OUT.");
     if (docSnap.exists()) {
       return docSnap.data().questions || [];
     }
@@ -32,9 +33,11 @@ export const saveQuestions = async (subjectId, questionsForm) => {
       let imageUrl = q.image; // Keep existing image if not changed
 
       if (q.imageFile) {
+        console.log(`Uploading image ${i+1}... Size: ${(q.imageFile.size / 1024).toFixed(2)} KB`);
         const uniqueName = Date.now() + '-' + q.imageFile.name;
         const storageRef = ref(storage, `uploads/${subjectId}/${uniqueName}`);
-        await withTimeout(uploadBytes(storageRef, q.imageFile), 15000, "STORAGE IS NOT RESPONDING. DID YOU ENABLE 'STORAGE' IN FIREBASE?");
+        await withTimeout(uploadBytes(storageRef, q.imageFile), 60000, "STORAGE UPLOAD TIMED OUT AFTER 60 SECONDS. IS YOUR INTERNET SLOW?");
+        console.log(`Upload complete. Getting URL...`);
         imageUrl = await getDownloadURL(storageRef);
       }
 
@@ -45,8 +48,9 @@ export const saveQuestions = async (subjectId, questionsForm) => {
       });
     }
 
+    console.log("Saving data to Firestore...");
     const docRef = doc(db, 'subjects', subjectId);
-    await withTimeout(setDoc(docRef, { questions: finalQuestions }), 10000, "FIRESTORE IS NOT RESPONDING. DID YOU CLICK 'CREATE DATABASE' IN FIREBASE?");
+    await withTimeout(setDoc(docRef, { questions: finalQuestions }), 30000, "FIRESTORE IS NOT RESPONDING. DID YOU CLICK 'CREATE DATABASE' IN FIREBASE?");
     
     return true;
   } catch (err) {
