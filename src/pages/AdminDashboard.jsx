@@ -116,14 +116,14 @@ export default function AdminDashboard({ playMetalClick, playImpact }) {
     setError('');
     playImpact?.();
     
-    const success = await saveQuestions(selectedSubject, questionsForm);
-    if (success) {
+    const result = await saveQuestions(selectedSubject, questionsForm);
+    if (result === true) {
       const updated = await getQuestions(selectedSubject);
       if (updated && updated.length > 0) setQuestionsForm(updated);
       setIsSaved(true);
       setTimeout(() => setIsSaved(false), 3000);
     } else {
-      setError('ERROR: FAILED TO SAVE TO DATABASE.');
+      setError(`ERROR: ${typeof result === 'string' ? result.toUpperCase() : 'FAILED TO SAVE TO DATABASE.'}`);
     }
   };
 

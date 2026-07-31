@@ -44,7 +44,7 @@ export const saveQuestions = async (subjectId, questionsForm) => {
     return true;
   } catch (err) {
     console.error('Error saving questions to Firebase:', err);
-    return false;
+    return err.message || false;
   }
 };
 
