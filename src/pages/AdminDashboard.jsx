@@ -116,18 +116,7 @@ export default function AdminDashboard({ playMetalClick, playImpact }) {
     setError('');
     playImpact?.();
     
-    const formData = new FormData();
-    const cleanedQuestions = questionsForm.map((q, idx) => {
-      const qCopy = { id: q.id, hint: q.hint, image: q.image };
-      if (q.imageFile) {
-        formData.append(`image_${idx}`, q.imageFile);
-      }
-      return qCopy;
-    });
-    
-    formData.append('data', JSON.stringify(cleanedQuestions));
-
-    const success = await saveQuestions(selectedSubject, formData);
+    const success = await saveQuestions(selectedSubject, questionsForm);
     if (success) {
       const updated = await getQuestions(selectedSubject);
       if (updated && updated.length > 0) setQuestionsForm(updated);
