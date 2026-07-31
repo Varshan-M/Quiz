@@ -2,10 +2,17 @@ import { db, storage } from '../firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
+const withTimeout = (promise, ms, errorMsg) => {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(errorMsg)), ms))
+  ]);
+};
+
 export const getQuestions = async (subjectId) => {
   try {
     const docRef = doc(db, 'subjects', subjectId);
-    const docSnap = await getDoc(docRef);
+    const docSnap = await withTimeout(getDoc(docRef), 10000, "FIRESTORE IS NOT RESPONDING. DID YOU CLICK 'CREATE DATABASE' IN FIREBASE?");
     if (docSnap.exists()) {
       return docSnap.data().questions || [];
     }
@@ -27,7 +34,7 @@ export const saveQuestions = async (subjectId, questionsForm) => {
       if (q.imageFile) {
         const uniqueName = Date.now() + '-' + q.imageFile.name;
         const storageRef = ref(storage, `uploads/${subjectId}/${uniqueName}`);
-        await uploadBytes(storageRef, q.imageFile);
+        await withTimeout(uploadBytes(storageRef, q.imageFile), 15000, "STORAGE IS NOT RESPONDING. DID YOU ENABLE 'STORAGE' IN FIREBASE?");
         imageUrl = await getDownloadURL(storageRef);
       }
 
@@ -39,7 +46,7 @@ export const saveQuestions = async (subjectId, questionsForm) => {
     }
 
     const docRef = doc(db, 'subjects', subjectId);
-    await setDoc(docRef, { questions: finalQuestions });
+    await withTimeout(setDoc(docRef, { questions: finalQuestions }), 10000, "FIRESTORE IS NOT RESPONDING. DID YOU CLICK 'CREATE DATABASE' IN FIREBASE?");
     
     return true;
   } catch (err) {

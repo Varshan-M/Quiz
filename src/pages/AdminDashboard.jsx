@@ -10,6 +10,7 @@ export default function AdminDashboard({ playMetalClick, playImpact }) {
   const [numQuestions, setNumQuestions] = useState('');
   const [questionsForm, setQuestionsForm] = useState([]);
   const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -108,15 +109,20 @@ export default function AdminDashboard({ playMetalClick, playImpact }) {
   };
 
   const handleSave = async () => {
+    if (isSaving) return;
+    
     const hasEmptyFields = questionsForm.some(q => !q.image || !q.hint.trim());
     if (hasEmptyFields) {
       setError('ERROR: PLEASE FILL ALL IMAGES AND HINTS BEFORE COMMITTING.');
       return;
     }
     setError('');
+    setIsSaving(true);
     playImpact?.();
     
     const result = await saveQuestions(selectedSubject, questionsForm);
+    setIsSaving(false);
+    
     if (result === true) {
       const updated = await getQuestions(selectedSubject);
       if (updated && updated.length > 0) setQuestionsForm(updated);
@@ -259,26 +265,32 @@ export default function AdminDashboard({ playMetalClick, playImpact }) {
                 style={{
                   flex: 1,
                   background: 'transparent',
-                  border: '1px solid #444',
-                  color: '#888',
-                  padding: '16px',
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontSize: '1rem',
-                  cursor: 'pointer',
+                  border: '2px solid #333',
+                  padding: '12px',
+                  color: '#D9D9D9',
+                  fontFamily: "'Bebas Neue', sans-serif",
+                  fontSize: '1.2rem',
                   letterSpacing: '0.1em',
-                  transition: 'all 0.3s'
+                  cursor: 'pointer',
+                  transition: '0.3s ease',
+                  opacity: isSaving ? 0.5 : 1,
+                  pointerEvents: isSaving ? 'none' : 'auto'
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = '#666'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = '#888'; e.currentTarget.style.borderColor = '#444'; }}
               >
                 RETURN HOME
               </button>
               <button 
                 onClick={handleSave}
+                disabled={isSaving}
                 className="btn-industrial"
-                style={{ flex: 2, padding: '16px', margin: 0 }}
+                style={{ 
+                  flex: 2,
+                  opacity: isSaving ? 0.7 : 1,
+                  cursor: isSaving ? 'wait' : 'pointer',
+                  backgroundColor: isSaved ? '#2d8a4e' : ''
+                }}
               >
-                {isSaved ? 'SAVED SUCCESSFULLY' : 'COMMIT TO DATABASE'}
+                {isSaving ? 'COMMITTING TO CLOUD...' : isSaved ? 'SAVED TO CLOUD!' : 'COMMIT TO DATABASE'}
               </button>
             </div>
           </div>
