@@ -61,13 +61,28 @@ export default function AdminDashboard({ playMetalClick, playImpact }) {
   const handleImageUpload = (index, file) => {
     if (!file) return;
     const reader = new FileReader();
-    reader.onloadend = () => {
-      setQuestionsForm(prev => {
-        const newForm = [...prev];
-        newForm[index].image = reader.result;
-        newForm[index].imageFile = file;
-        return newForm;
-      });
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 800;
+        const scaleSize = MAX_WIDTH / img.width;
+        canvas.width = MAX_WIDTH;
+        canvas.height = img.height * scaleSize;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        // Compress to 60% quality JPEG
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+        
+        setQuestionsForm(prev => {
+          const newForm = [...prev];
+          newForm[index].image = compressedBase64;
+          newForm[index].imageFile = null; // No longer using Firebase Storage
+          return newForm;
+        });
+      };
+      img.src = e.target.result;
     };
     reader.readAsDataURL(file);
   };
